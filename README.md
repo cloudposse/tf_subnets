@@ -163,8 +163,12 @@ Available targets:
 | cidr_block | Base CIDR block which will be divided into subnet CIDR blocks (e.g. `10.0.0.0/16`) | string | - | yes |
 | context | Default context to use for passing state between label invocations | object | `<map>` | no |
 | delimiter | Delimiter to be used between `namespace`, `stage`, `name` and `attributes` | string | `-` | no |
+| egress_public_nacl_rules | Egress values for the NACL (e.g. `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}`) | list | `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}` | yes |
+| egress_private_nacl_rules | Egress values for the NACL (e.g. `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}`) | list | `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}` | yes |
 | environment | The environment name if not using stage | string | `` | no |
 | igw_id | Internet Gateway ID the public route table will point to (e.g. `igw-9c26a123`) | string | - | yes |
+| ingress_public_nacl_rules | Ingress values for the NACL (e.g. `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}`) | list | `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}` | yes |
+| ingress_private_nacl_rules | Ingress values for the NACL (e.g. `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}`) | list | `{ rule_num : 100, from_port : 22, to_port: 22, protocol : "tcp", action : "allow", cidr : "0.0.0.0/0", "icmp_code": null, "icmp_type": null}` | yes |
 | label_order | The naming order of the ID output and Name tag | list(string) | `<list>` | no |
 | map_public_ip_on_launch | Instances launched into a public subnet should be assigned a public IP address | bool | `true` | no |
 | max_subnet_count | Sets the maximum amount of subnets to deploy. 0 will deploy a subnet for every provided availablility zone (in `availability_zones` variable) within the region | string | `0` | no |
