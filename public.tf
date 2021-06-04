@@ -12,14 +12,15 @@ module "public_label" {
 }
 
 locals {
-  public_subnet_count        = local.enabled && var.max_subnet_count == 0 ? length(flatten(data.aws_availability_zones.available.*.names)) : var.max_subnet_count
-  public_route_expr_enabled  = local.enabled && signum(length(var.vpc_default_route_table_id)) == 1
-  public_network_acl_enabled = local.enabled && signum(length(var.public_network_acl_id)) == 0 ? 1 : 0
-  vpc_default_route_table_id = local.enabled ? signum(length(var.vpc_default_route_table_id)) : 0
+  public_enabled             = local.enabled && var.create_public_subnets
+  public_subnet_count        = local.public_enabled && var.max_subnet_count == 0 ? length(flatten(data.aws_availability_zones.available.*.names)) : var.max_subnet_count
+  public_route_expr_enabled  = signum(length(var.vpc_default_route_table_id)) == 1
+  public_network_acl_enabled = local.public_enabled && signum(length(var.public_network_acl_id)) == 0 ? 1 : 0
+  vpc_default_route_table_id = local.public_enabled ? signum(length(var.vpc_default_route_table_id)) : 0
 }
 
 resource "aws_subnet" "public" {
-  count             = local.availability_zones_count
+  count             = local.public_enabled ? local.availability_zones_count : 0
   vpc_id            = join("", data.aws_vpc.default.*.id)
   availability_zone = element(var.availability_zones, count.index)
 
@@ -63,13 +64,13 @@ resource "aws_route" "public" {
 }
 
 resource "aws_route_table_association" "public" {
-  count          = local.public_route_expr_enabled ? 0 : local.availability_zones_count
+  count          = local.public_enabled ? (local.public_route_expr_enabled ? 0 : local.availability_zones_count) : 0
   subnet_id      = element(aws_subnet.public.*.id, count.index)
   route_table_id = aws_route_table.public[0].id
 }
 
 resource "aws_route_table_association" "public_default" {
-  count          = local.public_route_expr_enabled ? local.availability_zones_count : 0
+  count          = local.public_enabled ? (local.public_route_expr_enabled ? local.availability_zones_count : 0) : 0
   subnet_id      = element(aws_subnet.public.*.id, count.index)
   route_table_id = var.vpc_default_route_table_id
 }

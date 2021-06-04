@@ -136,3 +136,15 @@ variable "root_block_device_encrypted" {
   default     = true
   description = "Whether to encrypt the root block device"
 }
+
+variable "create_public_subnets" {
+  type        = bool
+  default     = true
+  description = "Set to false to prevent the module from creating public subnets. Some of your CIDR block will still be reserved, so you can change this later without disruption."
+}
+
+variable "create_private_subnets" {
+  type        = bool
+  default     = true
+  description = "Set to false to prevent the module from creating private subnets. Some of your CIDR block will still be reserved, so you can change this later without disruption."
+}
