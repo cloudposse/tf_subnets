@@ -43,6 +43,21 @@ output "nat_instance_ids" {
   value       = aws_instance.nat_instance.*.id
 }
 
+output "nat_instance_security_group_id" {
+  value       = module.nat_instance_security_group.id
+  description = "NAT Instance Security Group ID"
+}
+
+output "nat_instance_security_group_arn" {
+  value       = module.nat_instance_security_group.arn
+  description = "NAT Instance Security Group ARN"
+}
+
+output "nat_instance_security_group_name" {
+  value       = module.nat_instance_security_group.name
+  description = "NAT Instance Security Group name"
+}
+
 output "availability_zones" {
   description = "List of Availability Zones where subnets were created"
   value       = var.availability_zones

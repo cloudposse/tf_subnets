@@ -83,6 +83,42 @@ variable "nat_elastic_ips" {
   description = "Existing Elastic IPs to attach to the NAT Gateway(s) or Instance(s) instead of creating new ones."
 }
 
+variable "security_group_enabled" {
+  type        = bool
+  description = "Whether to create default Security Group for NAT Instance."
+  default     = true
+}
+
+variable "security_groups" {
+  description = "A list of Security Group IDs to associate with NAT Instance."
+  type        = list(string)
+  default     = []
+}
+
+variable "security_group_description" {
+  type        = string
+  default     = "Security Group for NAT Instance"
+  description = "The Security Group description."
+}
+
+variable "security_group_use_name_prefix" {
+  type        = bool
+  default     = false
+  description = "Whether to create a default Security Group with unique name beginning with the normalized prefix."
+}
+
+variable "security_group_rules" {
+  type        = list(any)
+  default     = []
+  description = <<-EOT
+    A list of maps of Security Group rules. 
+    The values of map is fully complated with `aws_security_group_rule` resource. 
+    To get more info see https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule .
+
+    By default it creates rules which are allows all `egress` trafic and all ingress from the `vpc_cidr`. 
+  EOT
+}
+
 variable "map_public_ip_on_launch" {
   type        = bool
   default     = true

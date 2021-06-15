@@ -9,45 +9,49 @@ module "nat_instance_label" {
 
 locals {
   cidr_block               = var.cidr_block != "" ? var.cidr_block : join("", data.aws_vpc.default.*.cidr_block)
-  nat_instance_enabled     = var.nat_instance_enabled ? 1 : 0
+  nat_instance_enabled     = local.enabled && var.nat_instance_enabled
   nat_instance_count       = var.nat_instance_enabled ? length(var.availability_zones) : 0
   nat_instance_eip_count   = local.use_existing_eips ? 0 : local.nat_instance_count
   instance_eip_allocations = local.use_existing_eips ? data.aws_eip.nat_ips.*.id : aws_eip.nat_instance.*.id
+  security_group_enabled   = local.enabled && var.security_group_enabled && var.nat_instance_enabled
+  security_group_rules     = local.nat_instance_enabled && length(var.security_group_rules) > 0 ? var.security_group_rules : local.default_security_group_rules
+
+  default_security_group_rules = [
+    {
+      type        = "egress"
+      description = "Allow all egress traffic"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"] #tfsec:ignore:AWS007
+    },
+    {
+      type        = "ingress"
+      description = "Allow ingress traffic from the VPC CIDR block"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = [local.cidr_block]
+    }
+  ]
 }
 
-resource "aws_security_group" "nat_instance" {
-  count       = local.enabled ? local.nat_instance_enabled : 0
-  name        = module.nat_instance_label.id
-  description = "Security Group for NAT Instance"
-  vpc_id      = var.vpc_id
-  tags        = module.nat_instance_label.tags
-}
+module "nat_instance_security_group" {
+  source  = "cloudposse/security-group/aws"
+  version = "0.3.1"
 
-resource "aws_security_group_rule" "nat_instance_egress" {
-  count             = local.enabled ? local.nat_instance_enabled : 0
-  description       = "Allow all egress traffic"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"] #tfsec:ignore:AWS007
-  security_group_id = join("", aws_security_group.nat_instance.*.id)
-  type              = "egress"
-}
+  use_name_prefix = var.security_group_use_name_prefix
+  rules           = local.security_group_rules
+  description     = var.security_group_description
+  vpc_id          = var.vpc_id
 
-resource "aws_security_group_rule" "nat_instance_ingress" {
-  count             = local.enabled ? local.nat_instance_enabled : 0
-  description       = "Allow ingress traffic from the VPC CIDR block"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = [local.cidr_block]
-  security_group_id = join("", aws_security_group.nat_instance.*.id)
-  type              = "ingress"
+  enabled = local.security_group_enabled
+  context = module.nat_instance_label.context
 }
 
 # aws --region us-west-2 ec2 describe-images --owners amazon --filters Name="name",Values="amzn-ami-vpc-nat*" Name="virtualization-type",Values="hvm"
 data "aws_ami" "nat_instance" {
-  count       = local.enabled ? local.nat_instance_enabled : 0
+  count       = local.nat_instance_enabled ? 1 : 0
   most_recent = true
 
   filter {
@@ -71,7 +75,7 @@ resource "aws_instance" "nat_instance" {
   ami                    = join("", data.aws_ami.nat_instance.*.id)
   instance_type          = var.nat_instance_type
   subnet_id              = element(aws_subnet.public.*.id, count.index)
-  vpc_security_group_ids = [aws_security_group.nat_instance[0].id]
+  vpc_security_group_ids = compact(concat(module.nat_instance_security_group.*.id, var.security_groups))
 
   tags = merge(
     module.nat_instance_label.tags,
